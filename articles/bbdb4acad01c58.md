@@ -420,12 +420,18 @@ curl https://todo-api-xxxxx-an.a.run.app/api/todos
 5. プロジェクト名: `todo-app`
 6. プロジェクト ID をメモ: `todo-app-xxxxx`
 
+![](https://storage.googleapis.com/zenn-user-upload/8096e1afc24e-20260114.png)
+
 ### 1.2 API を有効化
 
 以下の API を有効化（各リンクをクリックして「有効にする」）:
 
 - [Cloud Run API](https://console.cloud.google.com/apis/library/run.googleapis.com)
+  ![](https://storage.googleapis.com/zenn-user-upload/8181033cfd74-20260114.png)
+
 - [Artifact Registry API](https://console.cloud.google.com/apis/library/artifactregistry.googleapis.com)
+  ![](https://storage.googleapis.com/zenn-user-upload/98f2f4859060-20260114.png)
+
 - [Cloud SQL API](https://console.cloud.google.com/apis/library/sqladmin.googleapis.com)
 
 ### 1.3 Artifact Registry リポジトリ作成
@@ -433,10 +439,16 @@ curl https://todo-api-xxxxx-an.a.run.app/api/todos
 1. [Artifact Registry](https://console.cloud.google.com/artifacts) を開く
 2. 「リポジトリを作成」をクリック
 3. 設定:
+
    - 名前: `todo-api`
    - 形式: `Docker`
    - リージョン: `asia-northeast1`
+
+   ![](https://storage.googleapis.com/zenn-user-upload/646c3b1d2722-20260114.png)
+
 4. 「作成」をクリック
+
+![](https://storage.googleapis.com/zenn-user-upload/34629701ce99-20260114.png)
 
 ### 1.4 Cloud Run サービス作成
 
