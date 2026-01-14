@@ -135,32 +135,51 @@ curl https://todo-api-xxxxx-an.a.run.app/api/todos
 
 1. [Cloud Run](https://console.cloud.google.com/run) を開く
 2. 「サービスを作成」をクリック
+   ![](https://storage.googleapis.com/zenn-user-upload/cdfb248e32c9-20260114.png)
 3. 設定:
+
    - サービス名: `todo-api`
    - リージョン: `asia-northeast1`
    - コンテナイメージの URL: `us-docker.pkg.dev/cloudrun/container/hello`
-   - 認証: `未認証の呼び出しを許可`
+   - 認証: `公開アクセスを許可する`
+     ![](https://storage.googleapis.com/zenn-user-upload/c67578b4f9e2-20260114.png)
+
 4. 「コンテナ、ネットワーキング、セキュリティ」→「コンテナ」:
    - コンテナポート: `8080`
    - メモリ: `512 MiB`
    - CPU: `1`
-5. 「環境変数」:
-   - `DATABASE_URL` = `postgresql://ユーザー名:パスワード@/データベース名?host=/cloudsql/プロジェクトID:リージョン:インスタンス名`
-6. 「作成」をクリック
-7. サービス URL をメモ: `https://todo-api-xxxxx-an.a.run.app`
+   <!-- 5. 「環境変数」:
+   - `DATABASE_URL` = `postgresql://ユーザー名:パスワード@/データベース名?host=/cloudsql/プロジェクトID:リージョン:インスタンス名` -->
+     ![](https://storage.googleapis.com/zenn-user-upload/984e62def876-20260114.png)
+5. 「作成」をクリック
+6. サービス URL をメモ: `https://todo-api-xxxxx-an.a.run.app`
+
+完了後以下の画面が出れば成功
+
+![](https://storage.googleapis.com/zenn-user-upload/e0efc21f214c-20260114.png)
 
 ### 1.5 サービスアカウント作成
 
 1. [サービスアカウント](https://console.cloud.google.com/iam-admin/serviceaccounts) を開く
 2. 「サービスアカウントを作成」をクリック
+   ![](https://storage.googleapis.com/zenn-user-upload/727bd44f908b-20260114.png)
 3. サービスアカウント名: `github-actions`
+   ![](https://storage.googleapis.com/zenn-user-upload/f8ea516c8ebb-20260114.png)
 4. 権限を追加:
    - `Cloud Run 管理者`
    - `Artifact Registry 書き込み`
    - `サービス アカウント ユーザー`
+     ![](https://storage.googleapis.com/zenn-user-upload/b988919a6ffe-20260114.png)
 5. 「完了」をクリック
 6. 作成したサービスアカウントをクリック → 「キー」タブ
+   ![](https://storage.googleapis.com/zenn-user-upload/7a4e4cfacef9-20260114.png)
 7. 「鍵を追加」→「新しい鍵を作成」→「JSON」
+   ![](https://storage.googleapis.com/zenn-user-upload/7a4e4cfacef9-20260114.png)
+   ![](https://storage.googleapis.com/zenn-user-upload/d5825cfbe4ef-20260114.png)
+   ![](https://storage.googleapis.com/zenn-user-upload/9533adf124b4-20260114.png)
+
 8. ダウンロードされた JSON ファイルの内容をコピー（後で使う）
+   ![](https://storage.googleapis.com/zenn-user-upload/de2a8099acd8-20260114.png)
+   ![](https://storage.googleapis.com/zenn-user-upload/bef1c2edd7f4-20260114.png)
 
 ---
