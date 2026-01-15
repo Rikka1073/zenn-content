@@ -131,6 +131,51 @@ curl https://todo-api-xxxxx-an.a.run.app/api/todos
 
 ![](https://storage.googleapis.com/zenn-user-upload/34629701ce99-20260114.png)
 
+### 1.4 Docker イメージをビルドしてプッシュ
+
+**前提条件**: gcloud CLI がインストールされていること（[インストール手順](https://cloud.google.com/sdk/docs/install)）
+
+#### 1.4.1 gcloud 認証とプロジェクト設定
+
+```bash
+# gcloudにログイン
+gcloud auth login
+
+# プロジェクトを設定（プロジェクトIDを置き換えてください）
+gcloud config set project todo-app-xxxxx
+
+# Docker認証を設定
+gcloud auth configure-docker asia-northeast1-docker.pkg.dev
+```
+
+#### 1.4.2 Docker イメージをビルド
+
+```bash
+# プロジェクトルートに移動
+cd /path/to/todo-docker-app
+
+# todo-apiディレクトリに移動
+cd todo-api
+
+# Dockerイメージをビルド（プロジェクトIDを置き換えてください）
+docker build -t asia-northeast1-docker.pkg.dev/todo-app-xxxxx/todo-api/todo-api:latest .
+```
+
+**注意**: ビルド中に`DATABASE_URL`環境変数が必要というエラーが出る場合がありますが、Dockerfile でダミー値が設定されているので正常にビルドされます。
+
+#### 1.4.3 Artifact Registry にプッシュ
+
+```bash
+# イメージをプッシュ（プロジェクトIDを置き換えてください）
+docker push asia-northeast1-docker.pkg.dev/todo-app-xxxxx/todo-api/todo-api:latest
+```
+
+#### 1.4.4 プッシュ確認
+
+1. [Artifact Registry](https://console.cloud.google.com/artifacts) を開く
+2. `todo-api` リポジトリをクリック
+3. `todo-api` イメージが表示されていれば OK
+
 ### 1.4 Cloud Run サービス作成
 
 1. [Cloud Run](https://console.cloud.google.com/run) を開く
@@ -177,9 +222,125 @@ curl https://todo-api-xxxxx-an.a.run.app/api/todos
    ![](https://storage.googleapis.com/zenn-user-upload/7a4e4cfacef9-20260114.png)
    ![](https://storage.googleapis.com/zenn-user-upload/d5825cfbe4ef-20260114.png)
    ![](https://storage.googleapis.com/zenn-user-upload/9533adf124b4-20260114.png)
-
-8. ダウンロードされた JSON ファイルの内容をコピー（後で使う）
    ![](https://storage.googleapis.com/zenn-user-upload/de2a8099acd8-20260114.png)
+8. ダウンロードされた JSON ファイルの内容をコピー（後で使う）
    ![](https://storage.googleapis.com/zenn-user-upload/bef1c2edd7f4-20260114.png)
+
+---
+
+## ステップ 3: GitHub Secrets を設定
+
+1. GitHub リポジトリ → Settings → Secrets and variables → Actions
+2. 「New repository secret」をクリック
+3. 以下を 1 つずつ登録:
+
+### GCP 関連
+
+| Name                      | Value                                    |
+| ------------------------- | ---------------------------------------- |
+| `GCP_PROJECT_ID`          | `todo-app-xxxxx`（プロジェクト ID）      |
+| `GCP_SERVICE_ACCOUNT_KEY` | JSON ファイルの内容全体                  |
+| `GCP_REGION`              | `asia-northeast1`                        |
+| `CLOUD_RUN_SERVICE_NAME`  | `todo-api`                               |
+| `DATABASE_URL`            | `postgresql://...`（Cloud SQL 接続 URL） |
+
+### Vercel 関連
+
+| Name                | Value           |
+| ------------------- | --------------- |
+| `VERCEL_TOKEN`      | Vercel トークン |
+| `VERCEL_ORG_ID`     | Organization ID |
+| `VERCEL_PROJECT_ID` | Project ID      |
+
+---
+
+## ステップ 4: GitHub Actions ワークフローを作成
+
+### 4.1 フロントエンド用
+
+`.github/workflows/frontend-deploy.yml` を作成:
+
+```yaml
+name: Deploy Frontend to Vercel
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "public/**"
+      - "index.html"
+      - "package.json"
+      - "vite.config.ts"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build
+      - uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: "--prod"
+```
+
+### 4.2 バックエンド用
+
+`.github/workflows/backend-deploy.yml` を作成:
+
+```yaml
+name: Deploy Backend to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "todo-api/**"
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: ${{ secrets.GCP_REGION }}
+  SERVICE_NAME: ${{ secrets.CLOUD_RUN_SERVICE_NAME }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}"
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      - name: Build and Push
+        working-directory: ./todo-api
+        run: |
+          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/todo-api/todo-api:${{ github.sha }} .
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/todo-api/todo-api:${{ github.sha }}
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/todo-api/todo-api:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
+            --port 8080
+```
 
 ---
