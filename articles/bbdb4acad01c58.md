@@ -140,7 +140,13 @@ curl https://todo-api-xxxxx-an.a.run.app/api/todos
 ```bash
 # gcloudにログイン
 gcloud auth login
+```
 
+![](https://storage.googleapis.com/zenn-user-upload/efcd8096dab3-20260117.png)
+![](https://storage.googleapis.com/zenn-user-upload/73bec93b052a-20260117.png)
+![](https://storage.googleapis.com/zenn-user-upload/b5fe4e8e5311-20260117.png)
+
+```bash
 # プロジェクトを設定（プロジェクトIDを置き換えてください）
 gcloud config set project todo-app-xxxxx
 
