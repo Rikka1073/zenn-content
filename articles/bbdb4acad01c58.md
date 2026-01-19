@@ -180,7 +180,9 @@ docker push asia-northeast1-docker.pkg.dev/todo-app-xxxxx/todo-api/todo-api:late
 
 1. [Artifact Registry](https://console.cloud.google.com/artifacts) を開く
 2. `todo-api` リポジトリをクリック
+   ![](https://storage.googleapis.com/zenn-user-upload/6aab329b174a-20260118.png)
 3. `todo-api` イメージが表示されていれば OK
+   ![](https://storage.googleapis.com/zenn-user-upload/82447551acfd-20260118.png)
 
 ### 1.4 Cloud Run サービス作成
 
