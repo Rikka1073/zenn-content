@@ -120,7 +120,6 @@ curl https://todo-api-xxxxx-an.a.run.app/api/todos
 1. [Artifact Registry](https://console.cloud.google.com/artifacts) を開く
 2. 「リポジトリを作成」をクリック
 3. 設定:
-
    - 名前: `todo-api`
    - 形式: `Docker`
    - リージョン: `asia-northeast1`
@@ -130,6 +129,50 @@ curl https://todo-api-xxxxx-an.a.run.app/api/todos
 4. 「作成」をクリック
 
 ![](https://storage.googleapis.com/zenn-user-upload/34629701ce99-20260114.png)
+
+### 1.4 Neonでデータベースを作成
+
+**Neon**は、無料で使えるサーバーレスPostgreSQLサービスです。Cloud SQLより安く、セットアップも簡単です。
+
+#### 1.4.1 Neonアカウント作成
+
+1. [Neon](https://neon.tech) にアクセス
+2. 「Sign Up」をクリック
+3. GitHubアカウントでサインアップ（推奨）または、メールアドレスでサインアップ
+
+#### 1.4.2 プロジェクト作成
+
+1. ダッシュボードで「Create a project」をクリック
+2. 設定:
+   - **Project name**: `todo-app`
+   - **Database name**: `tododb`
+   - **Region**: `AWS / Asia Pacific (Tokyo) ap-northeast-1`（東京リージョン推奨）
+   - **PostgreSQL version**: `16`（最新版でOK）
+3. 「Create Project」をクリック
+
+#### 1.4.3 接続文字列を取得
+
+プロジェクト作成後、**Connection Details**が表示されます。
+
+1. 「Connection string」タブを選択
+2. **Pooled connection**を選択（推奨）
+3. 接続文字列をコピー:
+   ```
+   postgresql://your-username:your-password@ep-xxx-xxx.ap-northeast-1.aws.neon.tech/tododb?sslmode=require
+   ```
+4. この接続文字列を**安全な場所にメモ**（後でGitHub Secretsに登録します）
+
+#### 1.4.4 データベースの確認（オプション）
+
+Neonダッシュボードの「SQL Editor」で接続を確認できます:
+
+```sql
+-- テーブル一覧を表示
+\dt
+
+-- データベース情報を表示
+SELECT version();
+```
 
 ### 1.4 Docker イメージをビルドしてプッシュ
 
@@ -190,7 +233,6 @@ docker push asia-northeast1-docker.pkg.dev/todo-app-xxxxx/todo-api/todo-api:late
 2. 「サービスを作成」をクリック
    ![](https://storage.googleapis.com/zenn-user-upload/cdfb248e32c9-20260114.png)
 3. 設定:
-
    - サービス名: `todo-api`
    - リージョン: `asia-northeast1`
    - コンテナイメージの URL: `us-docker.pkg.dev/cloudrun/container/hello`
