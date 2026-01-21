@@ -10,87 +10,11 @@ published: false
 
 今回は**コンテナに触れたことがない方**を対象に、Todo アプリをインターネットにデプロイするまでの手順を丁寧に説明します。
 
-## React アプリをデプロイする
-
-React のアプリはすでに作成済みのところからスタートします。
-今回は Vercel を使用します。
-
-### Vercel とは
-
-**Vercel**は、フロントエンドアプリを簡単にデプロイできるサービスです。
-
-### 3.1 Vercel アカウント作成
-
-1. [Vercel](https://vercel.com) にアクセス
-2. "Sign Up" をクリック
-3. GitHub アカウントで連携してサインアップ
-
-### 3.2 プロジェクトをインポート
-
-1. Vercel ダッシュボードで「Add New...」→「Project」をクリック
-
-![](https://storage.googleapis.com/zenn-user-upload/8a3a8bdbc450-20260104.png)
-
-2. GitHub リポジトリ一覧から `todo-docker-app` (該当リポジトリー)を選択
-
-3. 「Import」をクリック
-
-![](https://storage.googleapis.com/zenn-user-upload/071d2e28e9db-20260104.png)
-
-### 3.3 ビルド設定
-
-Vercel が自動的に検出しますが、念のため確認：
-
-```
-Framework Preset: Vite
-Build Command: npm run build
-Output Directory: dist
-Install Command: npm install
-```
-
-**「Deploy」をクリック**
-
-![](https://storage.googleapis.com/zenn-user-upload/0a81d19aec6c-20260104.png)
-
-### 3.4 デプロイ完了
-
-数分後、デプロイが完了します：
-
-```
-✓ Your project has been deployed!
-
-URL: https://todo-docker-app-xxxxx.vercel.app
-```
-
-ブラウザで URL を開いて、アプリが表示されることを確認しましょう。
-
-![](https://storage.googleapis.com/zenn-user-upload/7e34edc8d0b4-20260104.png)
-
-#### API にアクセス
-
-```bash
-curl https://todo-api-xxxxx-an.a.run.app
-```
-
-レスポンスが返ってくれば OK！
-
-```json
-{
-  "message": "Hello from Hono!"
-}
-```
-
-#### 特定のエンドポイントを確認
-
-```bash
-curl https://todo-api-xxxxx-an.a.run.app/api/todos
-```
-
 ---
 
-# ステップ 1: GCP プロジェクトの準備
+# ステップ1: GCPプロジェクトの準備
 
-### 1.1 プロジェクト作成
+## 1.1 プロジェクト作成
 
 1. [Google Cloud Console](https://console.cloud.google.com/) にアクセス
 2. 「プロジェクトを作成」をクリック
@@ -103,7 +27,7 @@ curl https://todo-api-xxxxx-an.a.run.app/api/todos
 
 ![](https://storage.googleapis.com/zenn-user-upload/8096e1afc24e-20260114.png)
 
-### 1.2 API を有効化
+## 1.2 APIを有効化
 
 以下の API を有効化（各リンクをクリックして「有効にする」）:
 
@@ -115,7 +39,7 @@ curl https://todo-api-xxxxx-an.a.run.app/api/todos
 
 - [Cloud SQL API](https://console.cloud.google.com/apis/library/sqladmin.googleapis.com)
 
-### 1.3 Artifact Registry リポジトリ作成
+## 1.3 Artifact Registryリポジトリ作成
 
 1. [Artifact Registry](https://console.cloud.google.com/artifacts) を開く
 2. 「リポジトリを作成」をクリック
@@ -130,17 +54,19 @@ curl https://todo-api-xxxxx-an.a.run.app/api/todos
 
 ![](https://storage.googleapis.com/zenn-user-upload/34629701ce99-20260114.png)
 
-### 1.4 Neonでデータベースを作成
+---
+
+# ステップ2: Neonでデータベースを作成
 
 **Neon**は、無料で使えるサーバーレスPostgreSQLサービスです。Cloud SQLより安く、セットアップも簡単です。
 
-#### 1.4.1 Neonアカウント作成
+## 2.1 Neonアカウント作成
 
 1. [Neon](https://neon.tech) にアクセス
 2. 「Sign Up」をクリック
 3. GitHubアカウントでサインアップ（推奨）または、メールアドレスでサインアップ
 
-#### 1.4.2 プロジェクト作成
+## 2.2 プロジェクト作成
 
 1. ダッシュボードで「Create a project」をクリック
 2. 設定:
@@ -150,7 +76,7 @@ curl https://todo-api-xxxxx-an.a.run.app/api/todos
    - **PostgreSQL version**: `16`（最新版でOK）
 3. 「Create Project」をクリック
 
-#### 1.4.3 接続文字列を取得
+## 2.3 接続文字列を取得
 
 プロジェクト作成後、**Connection Details**が表示されます。
 
@@ -162,7 +88,7 @@ curl https://todo-api-xxxxx-an.a.run.app/api/todos
    ```
 4. この接続文字列を**安全な場所にメモ**（後でGitHub Secretsに登録します）
 
-#### 1.4.4 データベースの確認（オプション）
+## 2.4 データベースの確認（オプション）
 
 Neonダッシュボードの「SQL Editor」で接続を確認できます:
 
@@ -174,11 +100,13 @@ Neonダッシュボードの「SQL Editor」で接続を確認できます:
 SELECT version();
 ```
 
-### 1.4 Docker イメージをビルドしてプッシュ
+---
+
+# ステップ3: Dockerイメージをビルドしてプッシュ
 
 **前提条件**: gcloud CLI がインストールされていること（[インストール手順](https://cloud.google.com/sdk/docs/install)）
 
-#### 1.4.1 gcloud 認証とプロジェクト設定
+## 3.1 gcloud認証とプロジェクト設定
 
 ```bash
 # gcloudにログイン
@@ -197,7 +125,7 @@ gcloud config set project todo-app-xxxxx
 gcloud auth configure-docker asia-northeast1-docker.pkg.dev
 ```
 
-#### 1.4.2 Docker イメージをビルド
+## 3.2 Dockerイメージをビルド
 
 ```bash
 # プロジェクトルートに移動
@@ -212,14 +140,14 @@ docker build -t asia-northeast1-docker.pkg.dev/todo-app-xxxxx/todo-api/todo-api:
 
 **注意**: ビルド中に`DATABASE_URL`環境変数が必要というエラーが出る場合がありますが、Dockerfile でダミー値が設定されているので正常にビルドされます。
 
-#### 1.4.3 Artifact Registry にプッシュ
+## 3.3 Artifact Registryにプッシュ
 
 ```bash
 # イメージをプッシュ（プロジェクトIDを置き換えてください）
 docker push asia-northeast1-docker.pkg.dev/todo-app-xxxxx/todo-api/todo-api:latest
 ```
 
-#### 1.4.4 プッシュ確認
+## 3.4 プッシュ確認
 
 1. [Artifact Registry](https://console.cloud.google.com/artifacts) を開く
 2. `todo-api` リポジトリをクリック
@@ -227,7 +155,9 @@ docker push asia-northeast1-docker.pkg.dev/todo-app-xxxxx/todo-api/todo-api:late
 3. `todo-api` イメージが表示されていれば OK
    ![](https://storage.googleapis.com/zenn-user-upload/82447551acfd-20260118.png)
 
-### 1.4 Cloud Run サービス作成
+---
+
+# ステップ4: Cloud Runサービス作成
 
 1. [Cloud Run](https://console.cloud.google.com/run) を開く
 2. 「サービスを作成」をクリック
@@ -235,7 +165,7 @@ docker push asia-northeast1-docker.pkg.dev/todo-app-xxxxx/todo-api/todo-api:late
 3. 設定:
    - サービス名: `todo-api`
    - リージョン: `asia-northeast1`
-   - コンテナイメージの URL: `us-docker.pkg.dev/cloudrun/container/hello`
+   - コンテナイメージの URL: `asia-northeast1-docker.pkg.dev/todo-app-xxxxx/todo-api/todo-api:latest`
    - 認証: `公開アクセスを許可する`
      ![](https://storage.googleapis.com/zenn-user-upload/c67578b4f9e2-20260114.png)
 
@@ -253,7 +183,29 @@ docker push asia-northeast1-docker.pkg.dev/todo-app-xxxxx/todo-api/todo-api:late
 
 ![](https://storage.googleapis.com/zenn-user-upload/e0efc21f214c-20260114.png)
 
-### 1.5 サービスアカウント作成
+## 4.1 APIにアクセスして確認
+
+```bash
+curl https://todo-api-xxxxx-an.a.run.app
+```
+
+レスポンスが返ってくれば OK！
+
+```json
+{
+  "message": "Hello from Hono!"
+}
+```
+
+特定のエンドポイントを確認:
+
+```bash
+curl https://todo-api-xxxxx-an.a.run.app/api/todos
+```
+
+---
+
+# ステップ5: サービスアカウント作成
 
 1. [サービスアカウント](https://console.cloud.google.com/iam-admin/serviceaccounts) を開く
 2. 「サービスアカウントを作成」をクリック
@@ -278,13 +230,69 @@ docker push asia-northeast1-docker.pkg.dev/todo-app-xxxxx/todo-api/todo-api:late
 
 ---
 
-## ステップ 3: GitHub Secrets を設定
+# ステップ6: Vercelでフロントエンドをデプロイ
+
+React のアプリはすでに作成済みのところからスタートします。
+今回は Vercel を使用します。
+
+## 6.1 Vercelアカウント作成
+
+**Vercel**は、フロントエンドアプリを簡単にデプロイできるサービスです。
+
+1. [Vercel](https://vercel.com) にアクセス
+2. "Sign Up" をクリック
+3. GitHub アカウントで連携してサインアップ
+
+## 6.2 プロジェクトをインポート
+
+1. Vercel ダッシュボードで「Add New...」→「Project」をクリック
+
+![](https://storage.googleapis.com/zenn-user-upload/8a3a8bdbc450-20260104.png)
+
+2. GitHub リポジトリ一覧から `todo-docker-app` (該当リポジトリー)を選択
+
+3. 「Import」をクリック
+
+![](https://storage.googleapis.com/zenn-user-upload/071d2e28e9db-20260104.png)
+
+## 6.3 ビルド設定
+
+Vercel が自動的に検出しますが、念のため確認：
+
+```
+Framework Preset: Vite
+Build Command: npm run build
+Output Directory: dist
+Install Command: npm install
+```
+
+**「Deploy」をクリック**
+
+![](https://storage.googleapis.com/zenn-user-upload/0a81d19aec6c-20260104.png)
+
+## 6.4 デプロイ完了
+
+数分後、デプロイが完了します：
+
+```
+✓ Your project has been deployed!
+
+URL: https://todo-docker-app-xxxxx.vercel.app
+```
+
+ブラウザで URL を開いて、アプリが表示されることを確認しましょう。
+
+![](https://storage.googleapis.com/zenn-user-upload/7e34edc8d0b4-20260104.png)
+
+---
+
+# ステップ7: GitHub Secretsを設定
 
 1. GitHub リポジトリ → Settings → Secrets and variables → Actions
 2. 「New repository secret」をクリック
 3. 以下を 1 つずつ登録:
 
-### GCP 関連
+## GCP関連
 
 | Name                      | Value                                    |
 | ------------------------- | ---------------------------------------- |
@@ -292,9 +300,9 @@ docker push asia-northeast1-docker.pkg.dev/todo-app-xxxxx/todo-api/todo-api:late
 | `GCP_SERVICE_ACCOUNT_KEY` | JSON ファイルの内容全体                  |
 | `GCP_REGION`              | `asia-northeast1`                        |
 | `CLOUD_RUN_SERVICE_NAME`  | `todo-api`                               |
-| `DATABASE_URL`            | `postgresql://...`（Cloud SQL 接続 URL） |
+| `DATABASE_URL`            | `postgresql://...`（Neon 接続文字列） |
 
-### Vercel 関連
+## Vercel関連
 
 | Name                | Value           |
 | ------------------- | --------------- |
@@ -304,9 +312,9 @@ docker push asia-northeast1-docker.pkg.dev/todo-app-xxxxx/todo-api/todo-api:late
 
 ---
 
-## ステップ 4: GitHub Actions ワークフローを作成
+# ステップ8: GitHub Actionsワークフローを作成
 
-### 4.1 フロントエンド用
+## 8.1 フロントエンド用
 
 `.github/workflows/frontend-deploy.yml` を作成:
 
@@ -343,7 +351,7 @@ jobs:
           vercel-args: "--prod"
 ```
 
-### 4.2 バックエンド用
+## 8.2 バックエンド用
 
 `.github/workflows/backend-deploy.yml` を作成:
 
