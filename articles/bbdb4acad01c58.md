@@ -71,22 +71,28 @@ published: false
 1. ダッシュボードで「Create a project」をクリック
 2. 設定:
    - **Project name**: `todo-app`
-   - **Database name**: `tododb`
    - **Region**: `AWS / Asia Pacific (Tokyo) ap-northeast-1`（東京リージョン推奨）
-   - **PostgreSQL version**: `16`（最新版でOK）
+   - **PostgreSQL version**: `17`（最新版でOK）
 3. 「Create Project」をクリック
+
+![](https://storage.googleapis.com/zenn-user-upload/2d1aa8bb06b6-20260121.png)
 
 ## 2.3 接続文字列を取得
 
 プロジェクト作成後、**Connection Details**が表示されます。
 
 1. 「Connection string」タブを選択
-2. **Pooled connection**を選択（推奨）
-3. 接続文字列をコピー:
+   ![](https://storage.googleapis.com/zenn-user-upload/07255ab85397-20260121.png)
+
+2. 接続文字列をコピー:
+
    ```
    postgresql://your-username:your-password@ep-xxx-xxx.ap-northeast-1.aws.neon.tech/tododb?sslmode=require
    ```
-4. この接続文字列を**安全な場所にメモ**（後でGitHub Secretsに登録します）
+
+   ![](https://storage.googleapis.com/zenn-user-upload/317489ab2cb5-20260121.png)
+
+3. この接続文字列を**安全な場所にメモ**（後でGitHub Secretsに登録します）
 
 ## 2.4 データベースの確認（オプション）
 
@@ -99,6 +105,23 @@ Neonダッシュボードの「SQL Editor」で接続を確認できます:
 -- データベース情報を表示
 SELECT version();
 ```
+
+![](https://storage.googleapis.com/zenn-user-upload/0d37b08b34d1-20260121.png)
+
+## 2.5 Prismaマイグレーションについて
+
+現時点ではNeonにデータベースを作成しただけで、**テーブルは作成されていません**。
+
+Todoアプリで必要なテーブル（`Todo`テーブルなど）は、**GitHub Actionsが自動的に作成**します。
+具体的には、ステップ8で作成するバックエンド用ワークフローに、以下の処理が含まれています：
+
+```yaml
+- name: Run database migrations
+  run: |
+    npx prisma migrate deploy
+```
+
+このコマンドが、Prisma のスキーマ定義に基づいてテーブルを自動作成します。
 
 ---
 
@@ -284,6 +307,58 @@ URL: https://todo-docker-app-xxxxx.vercel.app
 
 ![](https://storage.googleapis.com/zenn-user-upload/7e34edc8d0b4-20260104.png)
 
+## 6.5 環境変数を設定
+
+**重要**: 現時点では、フロントエンドが開発環境（localhost）のAPIにアクセスしようとするため、正しく動作しません。
+
+本番環境のCloud Run APIに接続できるように、環境変数を設定します。
+
+### 環境変数の追加
+
+1. Vercel Dashboard → プロジェクト `todo-docker-app-tutorial` → **Settings** → **Environment Variables**
+2. 以下を追加:
+   - **Key**: `VITE_API_URL`
+   - **Value**: `https://todo-api-xxxxx-an.a.run.app`（**ステップ4.1で取得したCloud Run URL**）
+   - **Environments**: `Production`, `Preview`, `Development` すべてにチェック
+3. **Save** をクリック
+
+![Environment Variables追加画面]
+
+### 再デプロイ
+
+環境変数を追加しただけでは反映されないため、再デプロイが必要です。
+
+**方法1: Vercel Dashboardから再デプロイ**
+1. **Deployments** タブを開く
+2. 最新のデプロイの右側にある「...」メニューをクリック
+3. **Redeploy** をクリック
+
+**方法2: Gitから再デプロイ**
+```bash
+git commit --allow-empty -m "Trigger redeploy with environment variables"
+git push origin main
+```
+
+### 動作確認
+
+再デプロイ完了後、以下を確認します：
+
+1. https://todo-docker-app-xxxxx.vercel.app を開く
+2. ブラウザの開発者ツール（F12キー）を開く
+3. **Network** タブを選択
+4. TODOを追加してみる
+5. `https://todo-api-xxxxx-an.a.run.app/todos` へのリクエストが表示され、ステータスコード `200 OK` が返ってくればOK
+
+**成功例:**
+```
+POST https://todo-api-xxxxx-an.a.run.app/todos  200 OK
+```
+
+**失敗例（環境変数が未設定の場合）:**
+```
+POST http://localhost:3000/todos  net::ERR_FAILED
+```
+
 ---
 
 # ステップ7: GitHub Secretsを設定
@@ -294,12 +369,12 @@ URL: https://todo-docker-app-xxxxx.vercel.app
 
 ## GCP関連
 
-| Name                      | Value                                    |
-| ------------------------- | ---------------------------------------- |
-| `GCP_PROJECT_ID`          | `todo-app-xxxxx`（プロジェクト ID）      |
-| `GCP_SERVICE_ACCOUNT_KEY` | JSON ファイルの内容全体                  |
-| `GCP_REGION`              | `asia-northeast1`                        |
-| `CLOUD_RUN_SERVICE_NAME`  | `todo-api`                               |
+| Name                      | Value                                 |
+| ------------------------- | ------------------------------------- |
+| `GCP_PROJECT_ID`          | `todo-app-xxxxx`（プロジェクト ID）   |
+| `GCP_SERVICE_ACCOUNT_KEY` | JSON ファイルの内容全体               |
+| `GCP_REGION`              | `asia-northeast1`                     |
+| `CLOUD_RUN_SERVICE_NAME`  | `todo-api`                            |
 | `DATABASE_URL`            | `postgresql://...`（Neon 接続文字列） |
 
 ## Vercel関連
@@ -369,6 +444,8 @@ env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: ${{ secrets.GCP_REGION }}
   SERVICE_NAME: ${{ secrets.CLOUD_RUN_SERVICE_NAME }}
+  REPOSITORY: todo-api
+  IMAGE_NAME: todo-api
 
 jobs:
   deploy:
@@ -387,18 +464,53 @@ jobs:
       - name: Build and Push
         working-directory: ./todo-api
         run: |
-          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/todo-api/todo-api:${{ github.sha }} .
-          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/todo-api/todo-api:${{ github.sha }}
+          docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/todo-api/todo-api:${{ github.sha }} \
+            --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
             --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
             --port 8080
+
+      - name: Run database migrations
+        working-directory: ./todo-api
+        run: |
+          npm ci
+          npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 ```
+
+### ワークフローの説明
+
+このワークフローは、`todo-api/**` 配下のファイルが変更されると自動的に実行されます。
+
+**主要な処理の流れ:**
+
+1. **GCP認証** (`google-github-actions/auth@v2`)
+   - GitHub Secretsに登録したサービスアカウントキーで認証
+
+2. **Docker認証設定** (`gcloud auth configure-docker`)
+   - DockerクライアントがArtifact Registryにアクセスできるように設定
+
+3. **Dockerイメージのビルドとプッシュ** (`Build and Push`)
+   - `todo-api/Dockerfile`からイメージをビルド
+   - Artifact Registryにプッシュ
+   - イメージタグには`${{ github.sha }}`（コミットハッシュ）を使用
+
+4. **Cloud Runにデプロイ** (`Deploy to Cloud Run`)
+   - プッシュしたイメージをCloud Runにデプロイ
+   - 環境変数`DATABASE_URL`を設定
+
+5. **データベースマイグレーション** (`Run database migrations`)
+   - `npx prisma migrate deploy`でテーブルを作成・更新
+   - ここで初めてNeonデータベースにテーブルが作成されます
+
+**重要**: このワークフローにより、コードをpushするだけで、ビルド→デプロイ→マイグレーションが自動的に実行されます。
 
 ---
