@@ -369,13 +369,13 @@ POST http://localhost:3000/todos  net::ERR_FAILED
 
 ## GCP関連
 
-| Name                      | Value                                 |
-| ------------------------- | ------------------------------------- |
-| `GCP_PROJECT_ID`          | `todo-app-xxxxx`（プロジェクト ID）   |
-| `GCP_SERVICE_ACCOUNT_KEY` | JSON ファイルの内容全体               |
-| `GCP_REGION`              | `asia-northeast1`                     |
-| `CLOUD_RUN_SERVICE_NAME`  | `todo-api`                            |
-| `DATABASE_URL`            | `postgresql://...`（Neon 接続文字列） |
+| Name                      | Value                                        |
+| ------------------------- | -------------------------------------------- |
+| `GCP_PROJECT_ID`          | `todo-app-xxxxx`（プロジェクト ID）          |
+| `GCP_SERVICE_ACCOUNT_KEY` | JSON ファイルの内容全体                      |
+| `GCP_REGION`              | `asia-northeast1`                            |
+| `CLOUD_RUN_SERVICE_NAME`  | `todo-api`                                   |
+| `DATABASE_URL`            | `postgresql://...`（Neon 接続文字列）        |
 | `CORS_ORIGIN`             | `https://your-app.vercel.app`（VercelのURL） |
 
 ## Vercel関連
@@ -513,5 +513,32 @@ jobs:
    - ここで初めてNeonデータベースにテーブルが作成されます
 
 **重要**: このワークフローにより、コードをpushするだけで、ビルド→デプロイ→マイグレーションが自動的に実行されます。
+
+---
+
+# 完成
+
+これで Todo アプリのデプロイが完了しました。
+
+## 構成のおさらい
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│     Vercel      │────▶│   Cloud Run     │────▶│      Neon       │
+│  (Frontend)     │     │   (Backend)     │     │  (PostgreSQL)   │
+│  React + Vite   │     │   Hono API      │     │                 │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+        ▲                       ▲
+        │                       │
+        └───────────────────────┘
+              GitHub Actions
+           (自動ビルド・デプロイ)
+```
+
+# おわりに
+
+この記事では、コンテナ初心者の方向けに、Todo アプリを本番環境にデプロイする手順を解説しました。
+
+Docker、Cloud Run、Vercel、GitHub Actions といった技術を組み合わせることで、モダンな CI/CD パイプラインを構築できました。
 
 ---
