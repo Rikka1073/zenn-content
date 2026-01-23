@@ -316,28 +316,26 @@ URL: https://todo-docker-app-xxxxx.vercel.app
 ### 環境変数の追加
 
 1. Vercel Dashboard → プロジェクト `todo-docker-app-tutorial` → **Settings** → **Environment Variables**
+   ![](https://storage.googleapis.com/zenn-user-upload/adb16dc1311a-20260123.png)
 2. 以下を追加:
    - **Key**: `VITE_API_URL`
    - **Value**: `https://todo-api-xxxxx-an.a.run.app`（**ステップ4.1で取得したCloud Run URL**）
    - **Environments**: `Production`, `Preview`, `Development` すべてにチェック
 3. **Save** をクリック
-
-![Environment Variables追加画面]
+   ![](https://storage.googleapis.com/zenn-user-upload/34607a241dc2-20260123.png)
 
 ### 再デプロイ
 
 環境変数を追加しただけでは反映されないため、再デプロイが必要です。
 
-**方法1: Vercel Dashboardから再デプロイ**
+**Vercel Dashboardから再デプロイ**
+
 1. **Deployments** タブを開く
 2. 最新のデプロイの右側にある「...」メニューをクリック
-3. **Redeploy** をクリック
+   ![](https://storage.googleapis.com/zenn-user-upload/b173e279233a-20260123.png)
 
-**方法2: Gitから再デプロイ**
-```bash
-git commit --allow-empty -m "Trigger redeploy with environment variables"
-git push origin main
-```
+3. **Redeploy** をクリック
+   ![](https://storage.googleapis.com/zenn-user-upload/d2d8ef243dc3-20260123.png)
 
 ### 動作確認
 
@@ -350,11 +348,13 @@ git push origin main
 5. `https://todo-api-xxxxx-an.a.run.app/todos` へのリクエストが表示され、ステータスコード `200 OK` が返ってくればOK
 
 **成功例:**
+
 ```
 POST https://todo-api-xxxxx-an.a.run.app/todos  200 OK
 ```
 
 **失敗例（環境変数が未設定の場合）:**
+
 ```
 POST http://localhost:3000/todos  net::ERR_FAILED
 ```
@@ -376,6 +376,7 @@ POST http://localhost:3000/todos  net::ERR_FAILED
 | `GCP_REGION`              | `asia-northeast1`                     |
 | `CLOUD_RUN_SERVICE_NAME`  | `todo-api`                            |
 | `DATABASE_URL`            | `postgresql://...`（Neon 接続文字列） |
+| `CORS_ORIGIN`             | `https://your-app.vercel.app`（VercelのURL） |
 
 ## Vercel関連
 
@@ -474,7 +475,7 @@ jobs:
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }}" \
+            --set-env-vars "DATABASE_URL=${{ secrets.DATABASE_URL }},CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}" \
             --port 8080
 
       - name: Run database migrations
