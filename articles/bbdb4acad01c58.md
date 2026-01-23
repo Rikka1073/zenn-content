@@ -1,5 +1,5 @@
 ---
-title: "はじめてのデプロイガイド - コンテナ入門からCI/CD自動化まで"
+title: "TodoアプリをDocker + Cloud Run + Vercelでデプロイする"
 emoji: "💭"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: []
