@@ -2,8 +2,9 @@
 title: "TodoアプリをDocker + Cloud Run + Vercelでデプロイする"
 emoji: "💭"
 type: "tech" # tech: 技術記事 / idea: アイデア
-topics: []
-published: false
+topics: ["cloudrun", "docker", "vercel", "githubactions"]
+published: true
+publication_name: "jisou"
 ---
 
 # はじめに
